@@ -19,9 +19,9 @@
 
 
             #controls {
-                margin: auto;
-                width: 50%;
-                padding: 10px;
+                display: flex;
+                justify-content: center;
+                text-align: center;
             }
 
             section{
@@ -63,7 +63,7 @@
             });
 
             // 2 - elements on the page
-            let audioElement,canvasElement;
+            let audioElement, canvasElement;
 
             // UI
             let playButton;
@@ -120,7 +120,7 @@
 
                 // 4 - create an analyser node
                 analyserNode = audioCtx.createAnalyser();
-
+                
                 // fft stands for Fast Fourier Transform
                 analyserNode.fftSize = NUM_SAMPLES;
 
@@ -142,7 +142,6 @@
             function setupUI(){
                 playButton = document.querySelector("#playButton");
                 playButton.onclick = e => {
-                    console.log(`audioCtx.state = ${audioCtx.state}`);
 
                     setupWebaudio();
 
@@ -204,6 +203,20 @@
                 analyserNode.getByteFrequencyData(audioData); // frequency data
 
                 analyserNode.getByteTimeDomainData(waveData); // waveform data
+                
+                let currentSeconds = Math.floor(audioElement.currentTime % 60);
+                let currentMinutes = Math.floor(audioElement.currentTime / 60);
+                
+                let currentSecondsReadout = currentSeconds < 10 ? "0" + currentSeconds : currentSeconds;
+                let currentMinutesReadout = currentMinutes < 10 ? "0" + currentMinutes : currentMinutes;
+                
+                let totalSeconds = Math.floor(audioElement.duration % 60);
+                let totalMinutes = Math.floor(audioElement.duration / 60);
+                
+                let totalSecondsReadout = totalSeconds < 10 ? "0" + totalSeconds : totalSeconds;
+                let totalMinutesReadout = totalMinutes < 10 ? "0" + totalMinutes : totalMinutes;
+                
+                document.querySelector("#timestamp").innerHTML = `${currentMinutesReadout}:${currentSecondsReadout} | ${totalMinutesReadout}:${totalSecondsReadout}`;
 
                 // DRAW!
                 drawCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);  
@@ -215,6 +228,11 @@
                 let anglePerBar = ((Math.PI * 2) / frameData.length);
 
                 drawCtx.beginPath();
+                
+                let gradient = drawCtx.createLinearGradient(0, 0, 0, maxBarHeight);
+                gradient.addColorStop(0, "#000");
+                gradient.addColorStop(0.1, barColor);
+                gradient.addColorStop(1, barColor);
 
                 // loop through the data and draw!
                 for(let i = 0; i < frameData.length; i++) {
@@ -226,12 +244,12 @@
                     drawCtx.translate(distFromCenter, distFromCenter);
                     drawCtx.rotate(-0.8);
 
-                    drawCtx.fillStyle = barColor;
+                    drawCtx.fillStyle = gradient;
                     drawCtx.fillRect(0, 0, barWidth, Math.max(Math.min(frameData[i], maxBarHeight), 2));
 
                     drawCtx.restore();
 
-                    // Draw nodes
+                    // Draw node connections
 
                     if(i % nodeFrequency == 0) {
                         drawCtx.save();
@@ -247,7 +265,7 @@
                     }
                 }
 
-                // Draw node connections
+                // Finalize node connections
 
                 drawCtx.closePath();
                 drawCtx.strokeStyle = nodeColor;
@@ -378,9 +396,13 @@
     </head>
 
     <body>
-        <canvas width="720" height="720"></canvas>
+        <canvas width="650" height="650"></canvas>
+        
+        <div id="controls"><p id="timestamp">0:00 | 0:00</p></div>
+        
         <div id="controls">
             <audio></audio>
+            
             <section>
                 <label>Track: 
                     <select id="trackSelect">
@@ -394,17 +416,27 @@
                 <button id="playButton" data-playing="no"></button>
                 <button id="fsButton">Full Screen</button>
             </section>
+            
+        </div>
+        
+        <div id="controls">
+            
             <section>
                 ボリューム <input type="range" id="volumeSlider" min="0" max="2" value="1" step="0.01"> <span id="volumeLabel">???</span><br>
                 ノード <input type="range" id="nodeFrequencySlider" min="1" max="20" value="8" step="1"><br>
                 バーの幅 <input type="range" id="barMaxWidthSlider" min="1" max="20" value="3" step="0.01">
             </section>
-
+            
+        </div>
+        
+        <div id="controls">
+            
             <section>
-                <input type="checkbox" id="option1" value="Bike">???
-                <input type="checkbox" id="option2" value="Bike">???
-                <input type="checkbox" id="option3" value="Bike">???
+                <input type="checkbox" id="option1" value="Bike">オプション
+                <input type="checkbox" id="option2" value="Bike">オプション
+                <input type="checkbox" id="option3" value="Bike">オプション
             </section>
+            
         </div>
     </body>
 </html>
