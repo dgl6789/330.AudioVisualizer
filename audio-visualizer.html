@@ -84,13 +84,15 @@
 		
 		// FUNCTIONS
 		function init(){
-			setupWebaudio();
+            setupWebaudio();
 			setupCanvas();
 			setupUI();
 			update();
 		}
 		
 		function setupWebaudio(){
+            if(audioCtx != null) return;
+            
 			// 1 - The || is because WebAudio has not been standardized across browsers yet
 			const AudioContext = window.AudioContext || window.webkitAudioContext;
 			audioCtx = new AudioContext();
@@ -136,6 +138,8 @@
 			playButton = document.querySelector("#playButton");
 			playButton.onclick = e => {
 				console.log(`audioCtx.state = ${audioCtx.state}`);
+                
+                setupWebaudio();
 				
 				// check if context is in suspended state (autoplay policy)
 				if (audioCtx.state == "suspended") {
