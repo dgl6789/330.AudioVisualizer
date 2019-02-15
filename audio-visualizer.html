@@ -1,366 +1,470 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<meta charset="utf-8" />
-	<title>Web Audio Viz - Start</title>
-	<style>
-	body {
-		background: #eeeeee;
-		font-family: tahoma, verdana, sans serif;
-	}
+    <head>
+        <meta charset="utf-8" />
+        <title>青ビデオロマンス</title>
+        <style>
+            body {
+                background: #000;
+                color: #fff;
+                font-family: tahoma, verdana, sans serif;
+            }
 
-	canvas {
-		margin-left:10px;
-		margin-top:10px;
-		box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
-		background: black;
-	}
+            canvas {
+                padding: 0;
+                margin: auto;
+                display: block;
+                background: #000;
+            }
 
-	#controls{
-		margin-left:10px;
-		margin-top:10px;
-  }
-  
-  section{
-  	margin-bottom:1em;
-  }
-  
-  #playButton{
-  	font-size: 1.2em;
-  	width: 3.5em;
-  }
-  
-	button[data-playing="yes"]:after{
-		content: "Pause";
-	}
-	
-	button[data-playing="no"]:after{
-		content: "Play";
-	}
-	
-	#fsButton{
-  	font-size: 1.2em;
-  	width: 6em;
-  }
-	</style>
-	<script>
-		"use strict";
-		
-		window.onload = init;
-		
-		// SCRIPT SCOPED VARIABLES
-				
-		// 1- here we are faking an enumeration - we'll look at another way to do this soon 
-		const SOUND_PATH = Object.freeze({
-			sound1: "media/New Adventure Theme.mp3",
-			sound2: "media/Peanuts Theme.mp3",
-			sound3:  "media/The Picard Song.mp3",
-            sound4:  "media/Cyboogie.mp3"
-		});
-		
-		// 2 - elements on the page
-		let audioElement,canvasElement;
-		
-		// UI
-		let playButton;
-		
-		// 3 - our canvas drawing context
-		let drawCtx
-		
-		// 4 - our WebAudio context
-		let audioCtx;
-		
-		// 5 - nodes that are part of our WebAudio audio routing graph
-		let sourceNode, analyserNode, gainNode;
-		
-		// 6 - a typed array to hold the audio frequency data
-		const NUM_SAMPLES = 256;
-		// create a new array of 8-bit integers (0-255)
-		let audioData = new Uint8Array(NUM_SAMPLES/2); 
-		
-        let maxRadius = 200;
-        
-        let invert = false, tintRed = false, noise = false, sepia = false;
-		
-		// FUNCTIONS
-		function init(){
-            setupWebaudio();
-			setupCanvas();
-			setupUI();
-			update();
-		}
-		
-		function setupWebaudio(){
-            if(audioCtx != null) return;
-            
-			// 1 - The || is because WebAudio has not been standardized across browsers yet
-			const AudioContext = window.AudioContext || window.webkitAudioContext;
-			audioCtx = new AudioContext();
-			
-			// 2 - get a reference to the <audio> element on the page
-			audioElement = document.querySelector("audio");
-			audioElement.src = SOUND_PATH.sound3;
-			
-			// 3 - create an a source node that points at the <audio> element
-			sourceNode = audioCtx.createMediaElementSource(audioElement);
-			
-			// 4 - create an analyser node
-			analyserNode = audioCtx.createAnalyser();
-			
-			/*
-			We will request NUM_SAMPLES number of samples or "bins" spaced equally 
-			across the sound spectrum.
-			
-			If NUM_SAMPLES (fftSize) is 256, then the first bin is 0 Hz, the second is 172 Hz, 
-			the third is 344Hz. Each bin contains a number between 0-255 representing 
-			the amplitude of that frequency.
-			*/ 
-			
-			// fft stands for Fast Fourier Transform
-			analyserNode.fftSize = NUM_SAMPLES;
-			
-			// 5 - create a gain (volume) node
-			gainNode = audioCtx.createGain();
-			gainNode.gain.value = 1;
-			
-			// 6 - connect the nodes - we now have an audio graph
-			sourceNode.connect(analyserNode);
-			analyserNode.connect(gainNode);
-			gainNode.connect(audioCtx.destination);
-		}
-		
-		function setupCanvas(){
-			canvasElement = document.querySelector('canvas');
-			drawCtx = canvasElement.getContext("2d");
-		}
-		
-		function setupUI(){
-			playButton = document.querySelector("#playButton");
-			playButton.onclick = e => {
-				console.log(`audioCtx.state = ${audioCtx.state}`);
-                
+
+            #controls {
+                margin: auto;
+                width: 50%;
+                padding: 10px;
+            }
+
+            section{
+                margin-bottom:1em;
+            }
+
+            #playButton{
+                font-size: 1.2em;
+                width: 3.5em;
+            }
+
+            button[data-playing="yes"]:after{
+                content: "Pause";
+            }
+
+            button[data-playing="no"]:after{
+                content: "Play";
+            }
+
+            #fsButton{
+                font-size: 1.2em;
+                width: 6em;
+            }
+        </style>
+        <script>
+            "use strict";
+
+            window.onload = init;
+
+            // SCRIPT SCOPED VARIABLES
+
+            // 1- here we are faking an enumeration - we'll look at another way to do this soon 
+            const SOUND_PATH = Object.freeze({
+                sound1: "media/ARM-MISSAIL.mp3",
+                sound2: "media/DESPERATE CLEAR.mp3",
+                sound3: "media/HEARTBEAT NITES.mp3",
+                sound3: "media/LEMON NO YUME.mp3",
+                sound4: "media/LEMON NO YUME (MATT NIDA REMIX).mp3"
+            });
+
+            // 2 - elements on the page
+            let audioElement,canvasElement;
+
+            // UI
+            let playButton;
+
+            // 3 - our canvas drawing context
+            let drawCtx
+
+            // 4 - our WebAudio context
+            let audioCtx;
+
+            // 5 - nodes that are part of our WebAudio audio routing graph
+            let sourceNode, analyserNode, gainNode;
+
+            // 6 - a typed array to hold the audio frequency data
+            const NUM_SAMPLES = 256;
+            // create a new array of 8-bit integers (0-255)
+            let audioData = new Uint8Array(NUM_SAMPLES/2); 
+            let waveData = new Uint8Array(NUM_SAMPLES/2); 
+
+            // Visual data
+            let maxBarWidth = 1;
+            let initBarColor = "#FF0a7c";
+            let barColor = initBarColor;
+            let distFromCenter = 75;
+
+            let nodeRadius = 3;
+            let nodeFrequency = 8;
+            let nodeConnectorThickness = 1;
+            let nodeColor = "white";
+            let nodeDistanceFromCenter = 100;
+            let nodeDampening = 6;
+
+            // FUNCTIONS
+            function init(){
                 setupWebaudio();
-				
-				// check if context is in suspended state (autoplay policy)
-				if (audioCtx.state == "suspended") {
-					audioCtx.resume();
-				}
-
-				if (e.target.dataset.playing == "no") {
-					audioElement.play();
-					e.target.dataset.playing = "yes";
-				// if track is playing pause it
-				} else if (e.target.dataset.playing == "yes") {
-					audioElement.pause();
-					e.target.dataset.playing = "no";
-				}
-	
-			};
-			
-			let volumeSlider = document.querySelector("#volumeSlider");
-			volumeSlider.oninput = e => {
-				gainNode.gain.value = e.target.value;
-				volumeLabel.innerHTML = Math.round((e.target.value/2 * 100));
-			};
-			volumeSlider.dispatchEvent(new InputEvent("input"));
-            
-            let radiusSlider = document.querySelector("#circleRadius");
-			radiusSlider.oninput = e => {
-				maxRadius = e.target.value;
-			};
-			radiusSlider.dispatchEvent(new InputEvent("input"));
-			
-			
-			document.querySelector("#trackSelect").onchange = e =>{
-				audioElement.src = e.target.value;
-				// pause the current track if it is playing
-				playButton.dispatchEvent(new MouseEvent("click"));
-			};
-			
-            document.querySelector("#redTint").onchange = e => {
-                tintRed = e.target.checked;   
+                setupCanvas();
+                setupUI();
+                update();
             }
-            
-            document.querySelector("#redTint").onclick = e => { tintRed = e.target.checked; }
-            document.querySelector("#invert").onclick = e => { invert = e.target.checked; }
-            document.querySelector("#noise").onclick = e => { noise = e.target.checked; }
-            document.querySelector("#sepia").onclick = e => { sepia = e.target.checked; }
-			
-			// if track ends
-			audioElement.onended = () => {
-				playButton.dataset.playing = "no";
-			};
-			
-			document.querySelector("#fsButton").onclick = () =>{
-				requestFullscreen(canvasElement);
-			};
-			
-		}
-		
-		function update() { 
-			// this schedules a call to the update() method in 1/60 seconds
-			requestAnimationFrame(update);
-			
-			/*
-				Nyquist Theorem
-				http://whatis.techtarget.com/definition/Nyquist-Theorem
-				The array of data we get back is 1/2 the size of the sample rate 
-			*/
-			
-			// populate the audioData with the frequency data
-			// notice these arrays are passed "by reference" 
-			analyserNode.getByteFrequencyData(audioData);
-		
-			// OR
-			//analyserNode.getByteTimeDomainData(audioData); // waveform data
-			
-			// DRAW!
-			drawCtx.clearRect(0,0,800,600);  
-			let barWidth = 4;
-			let barSpacing = 1;
-			let barHeight = 100;
-			let topSpacing = 50;
-			
-			// loop through the data and draw!
-			for(let i=0; i<audioData.length; i++) { 
-                /*
-				drawCtx.fillStyle = 'rgba(0,255,0,0.6)'; 
-				
-				// the higher the amplitude of the sample (bin) the taller the bar
-				// remember we have to draw our bars left-to-right and top-down
-				drawCtx.fillRect(i * (barWidth + barSpacing),topSpacing + 256-audioData[i],barWidth,barHeight); 
+
+            function setupWebaudio(){
+                if(audioCtx != null) return;
+
+                // 1 - The || is because WebAudio has not been standardized across browsers yet
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+
+                // 2 - get a reference to the <audio> element on the page
+                audioElement = document.querySelector("audio");
+                audioElement.src = SOUND_PATH.sound3;
+
+                // 3 - create an a source node that points at the <audio> element
+                sourceNode = audioCtx.createMediaElementSource(audioElement);
+
+                // 4 - create an analyser node
+                analyserNode = audioCtx.createAnalyser();
+
+                // fft stands for Fast Fourier Transform
+                analyserNode.fftSize = NUM_SAMPLES;
+
+                // 5 - create a gain (volume) node
+                gainNode = audioCtx.createGain();
+                gainNode.gain.value = 1;
+
+                // 6 - connect the nodes - we now have an audio graph
+                sourceNode.connect(analyserNode);
+                analyserNode.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+            }
+
+            function setupCanvas(){
+                canvasElement = document.querySelector('canvas');
+                drawCtx = canvasElement.getContext("2d");
+            }
+
+            function setupUI(){
+                playButton = document.querySelector("#playButton");
+                playButton.onclick = e => {
+                    console.log(`audioCtx.state = ${audioCtx.state}`);
+
+                    setupWebaudio();
+
+                    // check if context is in suspended state (autoplay policy)
+                    if (audioCtx.state == "suspended") {
+                        audioCtx.resume();
+                    }
+
+                    if (e.target.dataset.playing == "no") {
+                        audioElement.play();
+                        e.target.dataset.playing = "yes";
+                        // if track is playing pause it
+                    } else if (e.target.dataset.playing == "yes") {
+                        audioElement.pause();
+                        e.target.dataset.playing = "no";
+                    }
+
+                };
+
+                let volumeSlider = document.querySelector("#volumeSlider");
+                volumeSlider.oninput = e => {
+                    gainNode.gain.value = e.target.value;
+                    volumeLabel.innerHTML = Math.round((e.target.value/2 * 100));
+                };
+                volumeSlider.dispatchEvent(new InputEvent("input"));
+
+                let nfSlider = document.querySelector("#nodeFrequencySlider");
+                nfSlider.oninput = e => {
+                    nodeFrequency = e.target.value;
+                };
+                nfSlider.dispatchEvent(new InputEvent("input"));
+
+                let barMaxWidthSlider = document.querySelector("#barMaxWidthSlider");
+                barMaxWidthSlider.oninput = e => {
+                    maxBarWidth = e.target.value;
+                };
+                barMaxWidthSlider.dispatchEvent(new InputEvent("input"));
                 
-                drawCtx.fillStyle = 'rgba(255, 0, 0, 0.6)';
-                drawCtx.fillRect(640 - i * (barWidth + barSpacing), topSpacing + 256 - audioData[i] - 20, barWidth, barHeight);
-                */
-                
+                let barHueSlider = document.querySelector("#barHueSlider");
+                barHueSlider.oninput = e => {
+
+                    //barColor = changeHue(initBarColor, e.target.value);
+                                        console.log(barColor);
+                };
+                barHueSlider.dispatchEvent(new InputEvent("input"));
+
+
+                document.querySelector("#trackSelect").onchange = e =>{
+                    audioElement.src = e.target.value;
+                    // pause the current track if it is playing
+                    playButton.dispatchEvent(new MouseEvent("click"));
+                };
+
+                // if track ends
+                audioElement.onended = () => {
+                    playButton.dataset.playing = "no";
+                };
+
+                document.querySelector("#fsButton").onclick = () =>{
+                    requestFullscreen(canvasElement);
+                };
+
+            }
+
+            function update() { 
+                requestAnimationFrame(update);
+
+                analyserNode.getByteFrequencyData(audioData); // frequency data
+
+                analyserNode.getByteTimeDomainData(waveData); // waveform data
+
+                // DRAW!
+                drawCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);  
+
+                let frameData = audioData.filter(n => n > 0);
+
+                let maxBarHeight = 200;
+                let barWidth = Math.max(2, Math.min((Math.PI * 2 * distFromCenter) / frameData.length, maxBarWidth));
+                let anglePerBar = ((Math.PI * 2) / frameData.length);
+
                 drawCtx.beginPath();
-                drawCtx.fillStyle = makeColor(0, 200, 0, 0.35);
-                drawCtx.arc(i * 10, canvasElement.height / 2, audioData[i] / 3, 0, 2 * Math.PI, false);
-                drawCtx.fill();
-                drawCtx.closePath();
-                
-                drawCtx.beginPath();
-                drawCtx.filllStyle = makeColor(0, 255, 0, 0.35);
-                drawCtx.arc(640 - i * 10, canvasElement.height / 2, audioData[i] / 3, 0, 2 * Math.PI, false);
-                drawCtx.fill();
-                drawCtx.closePath();
-                
-                // Circles
-                let percent = audioData[i] / 255;
-                let circleRadius = percent * maxRadius;
-                
-                drawCtx.beginPath();
-                drawCtx.fillStyle = makeColor(255, 111, 111, 0.34 - percent / 3.0);
-                drawCtx.arc(canvasElement.width / 2, canvasElement.height / 2, circleRadius, 0, 2 * Math.PI, false);
-                drawCtx.fill();
-                drawCtx.closePath();
-                
-                drawCtx.beginPath();
-                drawCtx.fillStyle = makeColor(0, 0, 255, 0.1 - percent / 10.0);
-                drawCtx.arc(canvasElement.width / 2, canvasElement.height / 2, circleRadius * 1.5, 0, 2 * Math.PI, false);
-                drawCtx.fill();
-                drawCtx.closePath();
-                
-                drawCtx.beginPath();
-                drawCtx.fillStyle = makeColor(200, 200, 0, 0.5 - percent / 5.0);
-                drawCtx.arc(canvasElement.width / 2, canvasElement.height / 2, circleRadius * 0.5, 0, 2 * Math.PI, false);
-                drawCtx.fill();
-                drawCtx.closePath();
-				
-			}
-            
-            manipulatePixels(drawCtx);
-			 
-		} 
-		
-        function manipulatePixels(ctx) {
-            let imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-            
-            let data = imageData.data;
-            let length = data.length;
-            let width = imageData.width;
-            
-            let i;
-            for(i = 0; i < length; i += 4) {
-                if(tintRed) {
-                    data[i] = data[i] + 100;   
+
+                // loop through the data and draw!
+                for(let i = 0; i < frameData.length; i++) {
+                    // Draw bars
+                    drawCtx.save();
+
+                    drawCtx.translate(canvasElement.width / 2, canvasElement.height / 2);
+                    drawCtx.rotate(i * anglePerBar);
+                    drawCtx.translate(distFromCenter, distFromCenter);
+                    drawCtx.rotate(-0.8);
+
+                    drawCtx.fillStyle = barColor;
+                    drawCtx.fillRect(0, 0, barWidth, Math.max(Math.min(frameData[i], maxBarHeight), 2));
+
+                    drawCtx.restore();
+
+                    // Draw nodes
+
+                    if(i % nodeFrequency == 0) {
+                        drawCtx.save();
+
+                        drawCtx.translate(canvasElement.width / 2, canvasElement.height / 2);
+                        drawCtx.rotate(i * anglePerBar);
+                        drawCtx.translate(nodeDistanceFromCenter + waveData[i] / nodeDampening, nodeDistanceFromCenter + waveData[i] / nodeDampening);
+                        drawCtx.rotate(-0.8);
+
+                        drawCtx.lineTo(0, 0);
+
+                        drawCtx.restore();
+                    }
                 }
-                
-                if(invert) {
-                    let red = data[i], green = data[i + 1], blue = data[i + 2];
-                    data[i] = 255 - red;
-                    data[i + 1] = 255 - green;
-                    data[i + 2] = 255 - blue;
-                }
-                
-                if(noise && Math.random() < 0.1) {
-                    data[i] = data[i + 1] = data[i + 2] = 128;   
-                }
-                
-                if(sepia) {
-                    let red = data[i], green = data[i + 1], blue = data[i + 2];
-                    
-                    data[i] = (red * .393) + (green *.769) + (blue * .189)
-                    data[i + 1] = (red * .349) + (green *.686) + (blue * .168)
-                    data[i + 2] = (red * .272) + (green *.534) + (blue * .131)   
+
+                // Draw node connections
+
+                drawCtx.closePath();
+                drawCtx.strokeStyle = nodeColor;
+                drawCtx.lineWidth = nodeConnectorThickness;
+                drawCtx.stroke();
+
+                // Draw nodes
+                for(let i = 0; i < frameData.length; i++) {
+
+                    if(i % nodeFrequency == 0) {
+                        drawCtx.save();
+
+                        drawCtx.translate(canvasElement.width / 2, canvasElement.height / 2);
+                        drawCtx.rotate(i * anglePerBar);
+                        drawCtx.translate(nodeDistanceFromCenter + waveData[i] / nodeDampening, nodeDistanceFromCenter + waveData[i] / nodeDampening);
+                        drawCtx.rotate(-0.8);
+
+                        drawCtx.beginPath();
+                        drawCtx.fillStyle = nodeColor;
+                        drawCtx.arc(0, 0, nodeRadius, 0, Math.PI * 2);
+                        drawCtx.closePath();
+                        drawCtx.fill();
+
+                        drawCtx.restore();
+                    }
                 }
             }
-         
-            ctx.putImageData(imageData, 0, 0);
-        }
-		
 
-		// HELPER FUNCTIONS
-		function makeColor(red, green, blue, alpha){
-   			var color='rgba('+red+','+green+','+blue+', '+alpha+')';
-   			return color;
-		}
-		
-		function requestFullscreen(element) {
-			if (element.requestFullscreen) {
-			  element.requestFullscreen();
-			} else if (element.mozRequestFullscreen) {
-			  element.mozRequestFullscreen();
-			} else if (element.mozRequestFullScreen) { // camel-cased 'S' was changed to 's' in spec
-			  element.mozRequestFullScreen();
-			} else if (element.webkitRequestFullscreen) {
-			  element.webkitRequestFullscreen();
-			}
-			// .. and do nothing if the method is not supported
-		};
-	</script>
-</head>
-<body>
-	<canvas width="640" height="400"></canvas>
-	<div id="controls">
-		<audio></audio>
-		<section>
-		<label>Track: 
-			<select id="trackSelect">
-				<option value="media/New Adventure Theme.mp3">New Adventure Theme</option>
-				<option value="media/Peanuts Theme.mp3">Peanuts Theme</option>
-				<option value="media/The Picard Song.mp3" selected>The Picard Song</option>
-                <option value="media/Cyboogie.mp3">Cyboogie</option>
-			</select>
-		</label>
-            <button id="playButton" data-playing="no"></button>
-            <button id="fsButton">Full Screen</button>
-		</section>
-		<section>
-			Volume: <input type="range" id="volumeSlider" min="0" max="2" value="1" step="0.01">
-			<span id="volumeLabel">???</span>
-			</section>
-        <section>
-			Circle Radius: <input type="range" id="circleRadius" min="10" max="300" value="200" step="0.01">
-        </section>
-        
-        <section>
-            <input type="checkbox" id="redTint" value="Bike">Red Tint
-            <input type="checkbox" id="invert" value="Bike">Invert
-            <input type="checkbox" id="noise" value="Bike">Noise
-            <input type="checkbox" id="sepia" value="Bike">Sepia
-        </section>
-	</div>
-</body>
+            function manipulatePixels(ctx) {
+                let imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+                let data = imageData.data;
+                let length = data.length;
+                let width = imageData.width;
+
+                for(let i = 0; i < length; i += 4) {
+
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+
+            // HELPER FUNCTIONS
+
+            function requestFullscreen(element) {
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.mozRequestFullscreen) {
+                    element.mozRequestFullscreen();
+                } else if (element.mozRequestFullScreen) { // camel-cased 'S' was changed to 's' in spec
+                    element.mozRequestFullScreen();
+                } else if (element.webkitRequestFullscreen) {
+                    element.webkitRequestFullscreen();
+                }
+                // .. and do nothing if the method is not supported
+            };
+
+            function changeHue(rgb, degree) {
+                var hsl = rgbToHSL(rgb);
+                hsl.h += degree;
+                if (hsl.h > 360) {
+                    hsl.h -= 360;
+                }
+                else if (hsl.h < 0) {
+                    hsl.h += 360;
+                }
+                return hslToRGB(hsl);
+            }
+
+            // exepcts a string and returns an object
+            function rgbToHSL(rgb) {
+                // strip the leading # if it's there
+                rgb = rgb.replace(/^\s*#|\s*$/g, '');
+
+                // convert 3 char codes --> 6, e.g. `E0F` --> `EE00FF`
+                if(rgb.length == 3){
+                    rgb = rgb.replace(/(.)/g, '$1$1');
+                }
+
+                var r = parseInt(rgb.substr(0, 2), 16) / 255,
+                    g = parseInt(rgb.substr(2, 2), 16) / 255,
+                    b = parseInt(rgb.substr(4, 2), 16) / 255,
+                    cMax = Math.max(r, g, b),
+                    cMin = Math.min(r, g, b),
+                    delta = cMax - cMin,
+                    l = (cMax + cMin) / 2,
+                    h = 0,
+                    s = 0;
+
+                if (delta == 0) {
+                    h = 0;
+                }
+                else if (cMax == r) {
+                    h = 60 * (((g - b) / delta) % 6);
+                }
+                else if (cMax == g) {
+                    h = 60 * (((b - r) / delta) + 2);
+                }
+                else {
+                    h = 60 * (((r - g) / delta) + 4);
+                }
+
+                if (delta == 0) {
+                    s = 0;
+                }
+                else {
+                    s = (delta/(1-Math.abs(2*l - 1)))
+                }
+
+                return {
+                    h: h,
+                    s: s,
+                    l: l
+                }
+            }
+
+            // expects an object and returns a string
+            function hslToRGB(hsl) {
+                var h = hsl.h,
+                    s = hsl.s,
+                    l = hsl.l,
+                    c = (1 - Math.abs(2*l - 1)) * s,
+                    x = c * ( 1 - Math.abs((h / 60 ) % 2 - 1 )),
+                    m = l - c/ 2,
+                    r, g, b;
+
+                if (h < 60) {
+                    r = c;
+                    g = x;
+                    b = 0;
+                }
+                else if (h < 120) {
+                    r = x;
+                    g = c;
+                    b = 0;
+                }
+                else if (h < 180) {
+                    r = 0;
+                    g = c;
+                    b = x;
+                }
+                else if (h < 240) {
+                    r = 0;
+                    g = x;
+                    b = c;
+                }
+                else if (h < 300) {
+                    r = x;
+                    g = 0;
+                    b = c;
+                }
+                else {
+                    r = c;
+                    g = 0;
+                    b = x;
+                }
+
+                r = normalize_rgb_value(r, m);
+                g = normalize_rgb_value(g, m);
+                b = normalize_rgb_value(b, m);
+
+                return rgbToHex(r,g,b);
+            }
+
+            function normalize_rgb_value(color, m) {
+                color = Math.floor((color + m) * 255);
+                if (color < 0) {
+                    color = 0;
+                }
+                return color;
+            }
+
+            function rgbToHex(r, g, b) {
+                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            }
+        </script>
+    </head>
+
+    <body>
+        <canvas width="720" height="720"></canvas>
+        <div id="controls">
+            <audio></audio>
+            <section>
+                <label>Track: 
+                    <select id="trackSelect">
+                        <option value="media/ARM-MISSAIL.mp3">ARM-MISSAIL</option>
+                        <option value="media/DESPERATE CLEAR.mp3">DESPERATE CLEAR</option>
+                        <option value="media/HEARTBEAT NITES.mp3">HEARTBEAT NITES</option>
+                        <option value="media/LEMON NO YUME.mp3" selected>LEMON NO YUME</option>
+                        <option value="media/LEMON NO YUME (MATT NIDA REMIX).mp3">LEMON NO YUME (MATT NIDA REMIX)</option>
+                    </select>
+                </label>
+                <button id="playButton" data-playing="no"></button>
+                <button id="fsButton">Full Screen</button>
+            </section>
+            <section>
+                ボリューム <input type="range" id="volumeSlider" min="0" max="2" value="1" step="0.01"> <span id="volumeLabel">???</span><br>
+                ノード <input type="range" id="nodeFrequencySlider" min="1" max="20" value="8" step="1"><br>
+                バーの幅 <input type="range" id="barMaxWidthSlider" min="1" max="20" value="3" step="0.01">
+                バーの色相 <input type="range" id="barHueSlider" min="-360" max="360" value="0" step="1">
+            </section>
+
+            <section>
+                <input type="checkbox" id="option1" value="Bike">???
+                <input type="checkbox" id="option2" value="Bike">???
+                <input type="checkbox" id="option3" value="Bike">???
+            </section>
+        </div>
+    </body>
 </html>
